@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retail Intelligence — Multi-Agent System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0e0f11;
+  --bg2: #141518;
+  --bg3: #1a1b1f;
+  --bg4: #202228;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #f0ede8;
+  --text2: #9b9892;
+  --text3: #5c5b58;
+  --accent: #c8f55a;
+  --accent-dim: rgba(200,245,90,0.12);
+  --accent-text: #8ab83c;
+  --red: #ff5e5e;
+  --red-bg: rgba(255,94,94,0.1);
+  --amber: #f5a623;
+  --amber-bg: rgba(245,166,35,0.1);
+  --blue: #5b9cf6;
+  --blue-bg: rgba(91,156,246,0.1);
+  --green: #4dcb8e;
+  --green-bg: rgba(77,203,142,0.1);
+  --teal: #38d9c0;
+  --teal-bg: rgba(56,217,192,0.1);
+  --font: 'DM Sans', sans-serif;
+  --font-serif: 'Fraunces', serif;
+  --font-mono: 'DM Mono', monospace;
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.app-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar { background: var(--bg2); border-right: 0.5px solid var(--border); padding: 0; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 20px 20px 16px; border-bottom: 0.5px solid var(--border); }
+.logo-mark { font-family: var(--font-serif); font-size: 18px; font-weight: 500; color: var(--text); letter-spacing: -0.3px; }
+.logo-mark span { color: var(--accent); }
+.logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.sidebar-section { padding: 12px 12px 8px; }
+.sidebar-label { font-size: 10px; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 8px 6px; }
+.agent-btn { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; border: none; background: transparent; color: var(--text2); font-family: var(--font); font-size: 13px; width: 100%; text-align: left; transition: all 0.15s; }
+.agent-btn:hover { background: var(--bg3); color: var(--text); }
+.agent-btn.active { background: var(--accent-dim); color: var(--accent); }
+.agent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.agent-btn.active .agent-dot { background: var(--accent); }
+.agent-btn:not(.active) .agent-dot { background: var(--text3); }
+.agent-icon { font-size: 15px; }
+
+.sidebar-query { padding: 12px; border-top: 0.5px solid var(--border); margin-top: auto; }
+.query-box { background: var(--bg3); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 10px 12px; }
+.query-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.query-text { font-size: 12px; color: var(--text2); line-height: 1.5; font-style: italic; }
+.run-all-btn { width: 100%; margin-top: 10px; padding: 9px; background: var(--accent); color: #0e0f11; border: none; border-radius: var(--radius); font-family: var(--font); font-weight: 500; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s; }
+.run-all-btn:hover { opacity: 0.88; }
+.run-all-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Main */
+.main-area { display: flex; flex-direction: column; overflow: hidden; }
+.main-header { padding: 18px 28px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--bg2); }
+.breadcrumb { font-size: 13px; color: var(--text2); }
+.breadcrumb span { color: var(--text); }
+.status-pills { display: flex; gap: 8px; }
+.pill { font-size: 11px; padding: 3px 10px; border-radius: 99px; display: flex; align-items: center; gap: 5px; border: 0.5px solid; }
+.pill-live { color: var(--green); border-color: rgba(77,203,142,0.3); background: var(--green-bg); }
+.pill-live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.agent-pipeline { display: flex; align-items: center; gap: 0; padding: 12px 28px; background: var(--bg3); border-bottom: 0.5px solid var(--border); overflow-x: auto; }
+.pipe-step { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px; font-size: 12px; white-space: nowrap; border: 0.5px solid var(--border); background: var(--bg4); color: var(--text2); transition: all 0.3s; }
+.pipe-step.done { color: var(--accent); border-color: rgba(200,245,90,0.3); background: var(--accent-dim); }
+.pipe-step.running { color: var(--blue); border-color: rgba(91,156,246,0.3); background: var(--blue-bg); animation: shimmer 1s ease-in-out infinite alternate; }
+@keyframes shimmer { from{opacity:0.7} to{opacity:1} }
+.pipe-step.pending { opacity: 0.4; }
+.pipe-arrow { color: var(--text3); font-size: 12px; padding: 0 2px; flex-shrink: 0; }
+
+.content { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+/* Agent panels */
+.agent-panel { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: border-color 0.3s; }
+.agent-panel.active-panel { border-color: var(--border2); }
+.agent-panel-header { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 0.5px solid var(--border); cursor: pointer; user-select: none; }
+.agent-panel-header:hover { background: var(--bg3); }
+.agent-meta { display: flex; align-items: center; gap: 10px; }
+.agent-badge { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.agent-name { font-size: 14px; font-weight: 500; }
+.agent-desc { font-size: 12px; color: var(--text3); }
+.agent-status { font-size: 11px; padding: 3px 10px; border-radius: 99px; border: 0.5px solid; }
+.status-idle { color: var(--text3); border-color: var(--border); }
+.status-running { color: var(--blue); border-color: rgba(91,156,246,0.35); background: var(--blue-bg); animation: shimmer 1s ease-in-out infinite alternate; }
+.status-done { color: var(--green); border-color: rgba(77,203,142,0.35); background: var(--green-bg); }
+.status-error { color: var(--red); border-color: rgba(255,94,94,0.35); background: var(--red-bg); }
+
+.agent-body { padding: 0; display: none; }
+.agent-body.open { display: block; }
+
+/* Typing loader */
+.agent-thinking { padding: 16px 18px; display: flex; align-items: center; gap: 8px; color: var(--text3); font-size: 13px; }
+.dot-loader span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); margin: 0 1.5px; animation: bounce 1.2s infinite; }
+.dot-loader span:nth-child(2) { animation-delay: 0.2s; }
+.dot-loader span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+/* Result sections */
+.result-section { padding: 16px 18px; border-bottom: 0.5px solid var(--border); }
+.result-section:last-child { border-bottom: none; }
+.result-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.result-label i { font-size: 13px; }
+
+/* SQL code block */
+.sql-block { background: var(--bg3); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: #b0c4de; white-space: pre-wrap; overflow-x: auto; }
+.kw { color: #7eb8f7; font-weight: 500; }
+.str { color: #87d068; }
+.cmt { color: #4a5568; font-style: italic; }
+.num { color: #f5a623; }
+.fn { color: #c084fc; }
+
+/* Metric grid */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.metric-card { background: var(--bg3); border-radius: var(--radius); padding: 12px 14px; }
+.metric-val { font-size: 22px; font-weight: 500; font-family: var(--font-serif); letter-spacing: -0.5px; }
+.metric-lbl { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.metric-delta { font-size: 11px; margin-top: 4px; }
+.up { color: var(--red); }
+.down { color: var(--green); }
+
+/* SKU table */
+.sku-table { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; }
+.sku-table th { text-align: left; padding: 6px 10px; color: var(--text3); font-weight: 400; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 0.5px solid var(--border); }
+.sku-table td { padding: 9px 10px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+.sku-table tr:last-child td { border-bottom: none; }
+.sku-table tr:hover td { background: var(--bg3); }
+.risk-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+.risk-critical { background: var(--red-bg); color: var(--red); }
+.risk-high { background: var(--amber-bg); color: var(--amber); }
+.risk-medium { background: var(--blue-bg); color: var(--blue); }
+
+/* Stock bar */
+.stock-bar { height: 6px; border-radius: 3px; background: var(--bg4); overflow: hidden; width: 80px; }
+.stock-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+
+/* Action cards */
+.actions-list { display: flex; flex-direction: column; gap: 8px; }
+.action-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--bg3); border-radius: var(--radius); border: 0.5px solid var(--border); }
+.action-num { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.action-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+.action-detail { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.action-tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 99px; margin-right: 5px; margin-top: 4px; border: 0.5px solid; }
+.tag-urgent { color: var(--red); border-color: rgba(255,94,94,0.4); background: var(--red-bg); }
+.tag-recommend { color: var(--teal); border-color: rgba(56,217,192,0.4); background: var(--teal-bg); }
+.tag-monitor { color: var(--amber); border-color: rgba(245,166,35,0.4); background: var(--amber-bg); }
+
+/* Executive report */
+.exec-report { font-size: 13.5px; line-height: 1.75; color: var(--text2); }
+.exec-report h3 { font-family: var(--font-serif); font-size: 17px; font-weight: 300; color: var(--text); margin-bottom: 10px; }
+.exec-report p { margin-bottom: 10px; }
+.exec-report strong { color: var(--text); font-weight: 500; }
+.exec-highlight { border-left: 2px solid var(--accent); padding-left: 12px; margin: 14px 0; color: var(--text); font-size: 14px; font-style: italic; font-family: var(--font-serif); font-weight: 300; }
+
+/* Chart wrapper */
+.chart-wrap { position: relative; width: 100%; height: 220px; margin-top: 4px; }
+
+/* Anomaly flags */
+.anomaly-list { display: flex; flex-direction: column; gap: 6px; }
+.anomaly-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius); border: 0.5px solid; }
+.anomaly-critical { border-color: rgba(255,94,94,0.25); background: rgba(255,94,94,0.05); }
+.anomaly-warning { border-color: rgba(245,166,35,0.25); background: rgba(245,166,35,0.05); }
+.anomaly-info { border-color: rgba(91,156,246,0.25); background: rgba(91,156,246,0.05); }
+.anomaly-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.anomaly-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.anomaly-desc { font-size: 12px; color: var(--text2); line-height: 1.4; }
+.anomaly-sku { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+/* Pricing table */
+.pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.pricing-card { background: var(--bg3); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+.pricing-sku { font-family: var(--font-mono); font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+.pricing-change { font-size: 20px; font-weight: 500; font-family: var(--font-serif); }
+.pricing-arrow { font-size: 12px; margin-left: 4px; }
+.pricing-reason { font-size: 11px; color: var(--text2); margin-top: 4px; line-height: 1.4; }
+
+/* Collapsible chevron */
+.chevron { font-size: 14px; color: var(--text3); transition: transform 0.2s; }
+.open .chevron { transform: rotate(180deg); }
+
+/* Intro bar */
+.intro-bar { background: var(--accent-dim); border: 0.5px solid rgba(200,245,90,0.2); border-radius: var(--radius); padding: 12px 16px; display: flex; align-items: flex-start; gap: 10px; }
+.intro-bar i { color: var(--accent); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.intro-bar p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+.intro-bar strong { color: var(--accent); }
+
+/* API key banner */
+.apikey-banner { background: var(--bg2); border-bottom: 0.5px solid var(--border2); padding: 10px 28px; display: flex; align-items: center; gap: 10px; }
+.apikey-banner label { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.apikey-input { flex: 1; max-width: 380px; background: var(--bg3); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 6px 10px; color: var(--text); font-family: var(--font-mono); font-size: 12px; }
+.apikey-input:focus { outline: none; border-color: var(--accent); }
+.apikey-input.valid { border-color: rgba(77,203,142,0.5); }
+.apikey-save { padding: 6px 14px; background: var(--accent); color: #0e0f11; border: none; border-radius: var(--radius); font-family: var(--font); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+.apikey-save:hover { opacity: 0.88; }
+.apikey-hint { font-size: 11px; color: var(--text3); }
+.apikey-hint a { color: var(--blue); text-decoration: none; }
+.apikey-hint a:hover { text-decoration: underline; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+@media (max-width: 700px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">Retail<span>IQ</span></div>
+      <div class="logo-sub">Multi-Agent Intelligence</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Active Agents</div>
+      <button class="agent-btn active" onclick="scrollToAgent('agent-sql')">
+        <i class="ti ti-database agent-icon"></i>
+        <span>SQL Agent</span>
+        <span class="agent-dot" style="margin-left:auto" id="dot-sql"></span>
+      </button>
+      <button class="agent-btn" onclick="scrollToAgent('agent-forecast')">
+        <i class="ti ti-trending-up agent-icon"></i>
+        <span>Forecasting Agent</span>
+        <span class="agent-dot" style="margin-left:auto" id="dot-forecast"></span>
+      </button>
+      <button class="agent-btn" onclick="scrollToAgent('agent-anomaly')">
+        <i class="ti ti-alert-triangle agent-icon"></i>
+        <span>Anomaly Detection</span>
+        <span class="agent-dot" style="margin-left:auto" id="dot-anomaly"></span>
+      </button>
+      <button class="agent-btn" onclick="scrollToAgent('agent-pricing')">
+        <i class="ti ti-tag agent-icon"></i>
+        <span>Pricing Agent</span>
+        <span class="agent-dot" style="margin-left:auto" id="dot-pricing"></span>
+      </button>
+      <button class="agent-btn" onclick="scrollToAgent('agent-exec')">
+        <i class="ti ti-file-text agent-icon"></i>
+        <span>Executive Summary</span>
+        <span class="agent-dot" style="margin-left:auto" id="dot-exec"></span>
+      </button>
+    </div>
+
+    <div class="sidebar-query">
+      <div class="query-box">
+        <div class="query-label">Active Query</div>
+        <div class="query-text" id="active-query-text">Enter your question below and run all agents.</div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:6px;">
+        <input id="user-query" style="flex:1; background:var(--bg3); border:0.5px solid var(--border2); border-radius:var(--radius); padding:8px 10px; color:var(--text); font-family:var(--font); font-size:12px;" placeholder="Ask about your inventory..." value="Which SKUs will stock out next week and what actions should I take?">
+      </div>
+      <button class="run-all-btn" id="run-btn" onclick="runAllAgents()">
+        <i class="ti ti-player-play" style="font-size:14px"></i>
+        Run all agents
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-area">
+    <div class="main-header">
+      <div class="breadcrumb">RetailIQ / <span>Inventory Intelligence</span></div>
+      <div class="status-pills">
+        <div class="pill pill-live">Live</div>
+        <div class="pill" style="color:var(--text3);border-color:var(--border);">
+          <i class="ti ti-clock" style="font-size:11px"></i>
+          <span id="timestamp">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="apikey-banner" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 28px;background:#141518;border-bottom:0.5px solid rgba(255,255,255,0.12);">
+      <span style="font-size:15px;color:#f5a623;">&#128273;</span>
+      <label for="apikey-field" style="white-space:nowrap;font-size:12px;color:#9b9892;">OpenRouter API key</label>
+      <input id="apikey-field" type="password" placeholder="sk-or-v1-..." autocomplete="off" oninput="onKeyInput(this)" style="flex:1;max-width:380px;background:#1a1b1f;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;color:#f0ede8;font-size:12px;outline:none;">
+      <button onclick="saveKey()" style="padding:6px 16px;background:#c8f55a;color:#0e0f11;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;">Save key</button>
+      <span style="font-size:11px;color:#5c5b58;">Free — <a href="https://openrouter.ai/keys" target="_blank" style="color:#5b9cf6;text-decoration:none;">openrouter.ai/keys</a></span>
+    </div>
+
+    <div class="agent-pipeline" id="pipeline">
+      <div class="pipe-step pending" id="pipe-sql"><i class="ti ti-database" style="font-size:12px"></i> SQL</div>
+      <div class="pipe-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="pipe-step pending" id="pipe-forecast"><i class="ti ti-trending-up" style="font-size:12px"></i> Forecast</div>
+      <div class="pipe-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="pipe-step pending" id="pipe-anomaly"><i class="ti ti-alert-triangle" style="font-size:12px"></i> Anomaly</div>
+      <div class="pipe-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="pipe-step pending" id="pipe-pricing"><i class="ti ti-tag" style="font-size:12px"></i> Pricing</div>
+      <div class="pipe-arrow"><i class="ti ti-arrow-right"></i></div>
+      <div class="pipe-step pending" id="pipe-exec"><i class="ti ti-file-text" style="font-size:12px"></i> Summary</div>
+    </div>
+
+    <div class="content" id="main-content">
+      <div class="intro-bar">
+        <i class="ti ti-sparkles" aria-hidden="true"></i>
+        <p><strong>5 specialized AI agents</strong> working in sequence — each agent's output feeds the next. Enter a query and click <strong>Run all agents</strong> to start the pipeline.</p>
+      </div>
+
+      <!-- SQL Agent -->
+      <div class="agent-panel" id="agent-sql">
+        <div class="agent-panel-header" onclick="togglePanel('sql')">
+          <div class="agent-meta">
+            <div class="agent-badge" style="background:var(--blue-bg);color:var(--blue)"><i class="ti ti-database"></i></div>
+            <div>
+              <div class="agent-name">SQL Agent</div>
+              <div class="agent-desc">Queries inventory, sales velocity, and reorder data</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="agent-status status-idle" id="status-sql">Idle</span>
+            <i class="ti ti-chevron-down chevron" id="chev-sql"></i>
+          </div>
+        </div>
+        <div class="agent-body" id="body-sql"></div>
+      </div>
+
+      <!-- Forecasting Agent -->
+      <div class="agent-panel" id="agent-forecast">
+        <div class="agent-panel-header" onclick="togglePanel('forecast')">
+          <div class="agent-meta">
+            <div class="agent-badge" style="background:var(--teal-bg);color:var(--teal)"><i class="ti ti-trending-up"></i></div>
+            <div>
+              <div class="agent-name">Forecasting Agent</div>
+              <div class="agent-desc">Predicts demand & days-of-supply using trend models</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="agent-status status-idle" id="status-forecast">Idle</span>
+            <i class="ti ti-chevron-down chevron" id="chev-forecast"></i>
+          </div>
+        </div>
+        <div class="agent-body" id="body-forecast"></div>
+      </div>
+
+      <!-- Anomaly Detection -->
+      <div class="agent-panel" id="agent-anomaly">
+        <div class="agent-panel-header" onclick="togglePanel('anomaly')">
+          <div class="agent-meta">
+            <div class="agent-badge" style="background:var(--red-bg);color:var(--red)"><i class="ti ti-alert-triangle"></i></div>
+            <div>
+              <div class="agent-name">Anomaly Detection Agent</div>
+              <div class="agent-desc">Flags demand spikes, supplier delays, and pattern breaks</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="agent-status status-idle" id="status-anomaly">Idle</span>
+            <i class="ti ti-chevron-down chevron" id="chev-anomaly"></i>
+          </div>
+        </div>
+        <div class="agent-body" id="body-anomaly"></div>
+      </div>
+
+      <!-- Pricing Agent -->
+      <div class="agent-panel" id="agent-pricing">
+        <div class="agent-panel-header" onclick="togglePanel('pricing')">
+          <div class="agent-meta">
+            <div class="agent-badge" style="background:var(--amber-bg);color:var(--amber)"><i class="ti ti-tag"></i></div>
+            <div>
+              <div class="agent-name">Pricing Agent</div>
+              <div class="agent-desc">Recommends replenishment quantities and price adjustments</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="agent-status status-idle" id="status-pricing">Idle</span>
+            <i class="ti ti-chevron-down chevron" id="chev-pricing"></i>
+          </div>
+        </div>
+        <div class="agent-body" id="body-pricing"></div>
+      </div>
+
+      <!-- Executive Summary -->
+      <div class="agent-panel" id="agent-exec">
+        <div class="agent-panel-header" onclick="togglePanel('exec')">
+          <div class="agent-meta">
+            <div class="agent-badge" style="background:var(--accent-dim);color:var(--accent)"><i class="ti ti-file-text"></i></div>
+            <div>
+              <div class="agent-name">Executive Summary Agent</div>
+              <div class="agent-desc">Synthesizes all agent outputs into a management report</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="agent-status status-idle" id="status-exec">Idle</span>
+            <i class="ti ti-chevron-down chevron" id="chev-exec"></i>
+          </div>
+        </div>
+        <div class="agent-body" id="body-exec"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const AGENTS = ['sql','forecast','anomaly','pricing','exec'];
+let openPanels = {};
+let forecastChart = null;
+let API_KEY = '';
+
+function onKeyInput(el) {
+  el.style.borderColor = el.value.length > 10 ? 'rgba(77,203,142,0.5)' : '';
+}
+
+function saveKey() {
+  const el = document.getElementById('apikey-field');
+  if (!el) return;
+  const val = el.value.trim();
+  if (val.length < 10) { el.style.borderColor = '#ff5e5e'; el.focus(); return; }
+  API_KEY = val;
+  const preview = val.substring(0, 8) + '...' + val.substring(val.length - 4);
+  console.log('API_KEY saved, length:', val.length, 'preview:', preview);
+  document.getElementById('apikey-banner').innerHTML =
+    '<span style="font-size:15px;color:#4dcb8e;">&#10003;</span>' +
+    '<span style="font-size:12px;color:#4dcb8e;margin-left:8px;">Key saved (' + val.length + ' chars: ' + preview + ')</span>' +
+    '<button id="test-btn" onclick="testKey()" style="margin-left:12px;padding:5px 14px;background:transparent;border:1px solid rgba(77,203,142,0.5);border-radius:8px;color:#4dcb8e;font-size:12px;cursor:pointer;font-family:inherit;">Test connection</button>' +
+    '<button onclick="clearKey()" style="margin-left:8px;padding:5px 14px;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#9b9892;font-size:12px;cursor:pointer;font-family:inherit;">Change key</button>';
+}
+
+function clearKey() {
+  API_KEY = '';
+  document.getElementById('apikey-banner').innerHTML =
+    '<span style="font-size:15px;color:#f5a623;">&#128273;</span>' +
+    '<label style="white-space:nowrap;font-size:12px;color:#9b9892;margin-left:8px;">OpenRouter API key</label>' +
+    '<input id="apikey-field" type="password" placeholder="sk-or-v1-..." autocomplete="off" oninput="onKeyInput(this)" style="flex:1;max-width:380px;background:#1a1b1f;border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:6px 10px;color:#f0ede8;font-size:12px;margin-left:8px;outline:none;" />' +
+    '<button onclick="saveKey()" style="padding:6px 16px;background:#c8f55a;color:#0e0f11;border:none;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;margin-left:8px;font-family:inherit;">Save key</button>' +
+    '<span style="font-size:11px;color:#5c5b58;margin-left:8px;">Free — <a href="https://openrouter.ai/keys" target="_blank" style="color:#5b9cf6;text-decoration:none;">openrouter.ai/keys</a></span>';
+}
+
+async function testKey() {
+  const btn = document.getElementById('test-btn');
+  if (btn) { btn.textContent = 'Testing...'; btn.style.opacity = '0.6'; }
+  console.log('Testing with key length:', API_KEY.length, '| starts with:', API_KEY.substring(0,10));
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + API_KEY,
+        'HTTP-Referer': 'https://retailiq.app',
+        'X-Title': 'RetailIQ'
+      },
+      body: JSON.stringify({
+        model: 'openrouter/auto',
+        messages: [{ role: 'user', content: 'Say OK' }],
+        max_tokens: 5
+      })
+    });
+    const data = await res.json();
+    console.log('OpenRouter response:', JSON.stringify(data).substring(0, 300));
+    if (!res.ok) throw new Error((data?.error?.message || data?.error?.code || JSON.stringify(data?.error) || 'HTTP ' + res.status));
+    if (btn) { btn.textContent = 'Connected! ✓'; btn.style.color = '#4dcb8e'; btn.style.opacity = '1'; }
+    setTimeout(() => { if (btn) btn.textContent = 'Test connection'; }, 3000);
+  } catch (e) {
+    console.error('testKey error:', e);
+    if (btn) { btn.textContent = 'Failed: ' + e.message; btn.style.color = '#ff5e5e'; btn.style.opacity = '1'; }
+    setTimeout(() => { if (btn) { btn.textContent = 'Test connection'; btn.style.color = '#4dcb8e'; } }, 8000);
+  }
+}
+
+function ts() {
+  return new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+document.getElementById('timestamp').textContent = ts();
+setInterval(() => { document.getElementById('timestamp').textContent = ts(); }, 1000);
+
+function scrollToAgent(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function togglePanel(id) {
+  const body = document.getElementById('body-' + id);
+  const chev = document.getElementById('chev-' + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function openPanel(id) {
+  const body = document.getElementById('body-' + id);
+  const chev = document.getElementById('chev-' + id);
+  body.classList.add('open');
+  chev.style.transform = 'rotate(180deg)';
+}
+
+function setStatus(id, state, label) {
+  const el = document.getElementById('status-' + id);
+  el.className = 'agent-status status-' + state;
+  el.textContent = label;
+  const dot = document.getElementById('dot-' + id);
+  if (dot) {
+    if (state === 'done') dot.style.background = 'var(--green)';
+    else if (state === 'running') dot.style.background = 'var(--blue)';
+    else if (state === 'error') dot.style.background = 'var(--red)';
+    else dot.style.background = 'var(--text3)';
+  }
+  const pipe = document.getElementById('pipe-' + id);
+  if (pipe) {
+    pipe.className = 'pipe-step ' + (state === 'done' ? 'done' : state === 'running' ? 'running' : 'pending');
+  }
+}
+
+function showThinking(bodyId, msg) {
+  const body = document.getElementById('body-' + bodyId);
+  body.innerHTML = `<div class="agent-thinking"><div class="dot-loader"><span></span><span></span><span></span></div><span>${msg}</span></div>`;
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+const SYSTEM_PROMPTS = {
+sql: `You are a retail SQL agent. Given a user query about inventory stockouts, generate a realistic SQL analysis response.
+
+Return ONLY valid JSON (no markdown, no backticks, no preamble):
+{
+  "sql": "SQL query string with newlines as \\n",
+  "metrics": [
+    {"label": "SKUs at risk", "value": "number", "delta": "+X% vs last week", "up": true},
+    {"label": "Total units low", "value": "number", "delta": "string", "up": false},
+    {"label": "Revenue at risk", "value": "$X,XXX", "delta": "string", "up": true},
+    {"label": "Avg days left", "value": "X.X days", "delta": "string", "up": false}
+  ],
+  "skus": [
+    {"sku":"SKU-001","name":"Product Name","stock":120,"velocity":28,"daysLeft":4,"risk":"critical","category":"Category"},
+    ... 6 SKUs total, mix of critical/high/medium risk
+  ]
+}`,
+
+forecast: `You are a demand forecasting agent for retail. Given inventory data with SKUs, generate a forecast response.
+
+Return ONLY valid JSON:
+{
+  "summary": "2 sentence summary of forecast findings",
+  "chartData": {
+    "labels": ["Mon","Tue","Wed","Thu","Fri","Sat","Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    "actual": [array of 7 numbers representing past 7 days total demand],
+    "forecast": [null,null,null,null,null,null,null, ...7 forecast numbers]
+  },
+  "skuForecasts": [
+    {"sku":"SKU-XXX","name":"name","stockoutDay":"Day name","confidence":85,"replenishQty":500},
+    ... for each critical/high risk SKU
+  ]
+}`,
+
+anomaly: `You are an anomaly detection agent for retail inventory. Detect anomalies relevant to stockout risk.
+
+Return ONLY valid JSON:
+{
+  "anomalies": [
+    {
+      "severity": "critical|warning|info",
+      "title": "Anomaly title",
+      "description": "Detailed description of what was detected and why it matters",
+      "skus": ["SKU-XXX"],
+      "detectedAt": "time string"
+    }
+  ],
+  "riskScore": 78
+}`,
+
+pricing: `You are a retail pricing and replenishment agent. Given stockout risk data, recommend replenishment quantities and price actions.
+
+Return ONLY valid JSON:
+{
+  "replenishments": [
+    {"sku":"SKU-XXX","name":"name","currentStock":100,"recommendedOrder":500,"supplier":"Supplier Name","leadDays":3,"urgency":"immediate|standard","estimatedCost":"$X,XXX"},
+    ... for each at-risk SKU
+  ],
+  "priceActions": [
+    {"sku":"SKU-XXX","name":"name","currentPrice":"$XX.XX","recommendedChange":"+5%","reason":"shortage markup to manage demand","newPrice":"$XX.XX"},
+    ... 3 price actions
+  ],
+  "totalReplenishmentCost": "$XX,XXX"
+}`,
+
+exec: `You are an executive summary agent synthesizing retail inventory analysis. Create a management report.
+
+Return ONLY valid JSON:
+{
+  "headline": "One punchy headline sentence",
+  "executiveSummary": "3-4 sentences covering: how many SKUs at risk, expected stockout timeline, revenue impact, and top recommended action",
+  "keyFindings": ["finding 1", "finding 2", "finding 3", "finding 4"],
+  "immediateActions": ["action 1", "action 2", "action 3"],
+  "riskLevel": "HIGH|MEDIUM|LOW",
+  "estimatedRevenueImpact": "$XX,XXX"
+}`
+};
+
+let agentResults = {};
+
+async function callClaude(systemPrompt, userMessage, attempt) {
+  attempt = attempt || 1;
+  if (!API_KEY) throw new Error('No API key. Paste your OpenRouter key and click Save key.');
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + API_KEY,
+      'HTTP-Referer': 'https://retailiq.app',
+      'X-Title': 'RetailIQ'
+    },
+    body: JSON.stringify({
+      model: 'openrouter/auto',
+      messages: [
+        { role: 'system', content: systemPrompt + '\n\nIMPORTANT: Return ONLY the raw JSON object. No markdown, no code fences, no explanation before or after. Start your response with { and end with }.' },
+        { role: 'user', content: userMessage }
+      ],
+      max_tokens: 2500,
+      temperature: 0.6
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'API error ' + res.status);
+  }
+  const data = await res.json();
+  const raw = data.choices?.[0]?.message?.content || '';
+  const parsed = extractJSON(raw);
+  if (parsed) return parsed;
+  // Retry once if the model returned malformed/truncated JSON
+  if (attempt < 2) return callClaude(systemPrompt, userMessage, attempt + 1);
+  throw new Error('Model returned invalid JSON. Click Run all agents to retry.');
+}
+
+function extractJSON(raw) {
+  if (!raw) return null;
+  // Strip code fences
+  let s = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+  // Try direct parse first
+  try { return JSON.parse(s); } catch (e) {}
+  // Find the first { and last } and try parsing that slice
+  const start = s.indexOf('{');
+  const end = s.lastIndexOf('}');
+  if (start !== -1 && end !== -1 && end > start) {
+    const slice = s.substring(start, end + 1);
+    try { return JSON.parse(slice); } catch (e) {}
+  }
+  return null;
+}
+
+function renderSQL(data) {
+  const d = agentResults.sql;
+  if (!d || !d.skus) { document.getElementById('body-sql').innerHTML = '<div style="padding:16px 18px;color:#ff5e5e;font-size:13px">Incomplete data returned. Click Run all agents to retry.</div>'; return; }
+  d.metrics = d.metrics || [];
+  d.skus = d.skus || [];
+  const skuRows = d.skus.map(s => {
+    const pct = Math.min(100, Math.round((s.stock / (s.velocity * 14)) * 100));
+    const color = s.risk === 'critical' ? 'var(--red)' : s.risk === 'high' ? 'var(--amber)' : 'var(--blue)';
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">${s.sku}</td>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.stock.toLocaleString()}</td>
+      <td>${s.velocity}/day</td>
+      <td style="font-weight:500;color:${s.daysLeft <= 4 ? 'var(--red)' : s.daysLeft <= 7 ? 'var(--amber)' : 'var(--text)'}">${s.daysLeft} days</td>
+      <td>
+        <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${color}"></div></div>
+      </td>
+      <td><span class="risk-chip risk-${s.risk}">${s.risk}</span></td>
+      <td style="color:var(--text3);font-size:11px">${s.category}</td>
+    </tr>`;
+  }).join('');
+
+  const metricCards = d.metrics.map(m => `
+    <div class="metric-card">
+      <div class="metric-lbl">${m.label}</div>
+      <div class="metric-val">${m.value}</div>
+      <div class="metric-delta ${m.up ? 'up' : 'down'}">${m.delta}</div>
+    </div>`).join('');
+
+  const sqlFormatted = d.sql
+    .replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT|INNER|ON|GROUP BY|ORDER BY|HAVING|LIMIT|WITH|AS|AND|OR|NOT|IN|IS|NULL|DISTINCT|CASE|WHEN|THEN|ELSE|END|UNION|OVER|PARTITION BY)\b/g, '<span class="kw">$1</span>')
+    .replace(/'([^']*)'/g, "<span class=\"str\">'$1'</span>")
+    .replace(/--[^\n]*/g, m => `<span class="cmt">${m}</span>`)
+    .replace(/\b(COUNT|SUM|AVG|MIN|MAX|ROUND|DATE_TRUNC|COALESCE|NULLIF|DATEDIFF|NOW|CURRENT_DATE)\b/g, '<span class="fn">$1</span>')
+    .replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+
+  document.getElementById('body-sql').innerHTML = `
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-code"></i> Generated query</div>
+      <div class="sql-block">${sqlFormatted}</div>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-chart-bar"></i> Inventory snapshot</div>
+      <div class="metrics-grid">${metricCards}</div>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-list"></i> At-risk SKUs</div>
+      <div style="overflow-x:auto">
+        <table class="sku-table">
+          <thead><tr>
+            <th style="width:80px">SKU</th><th>Name</th><th>Stock</th><th>Velocity</th><th>Days left</th><th>Level</th><th>Risk</th><th>Category</th>
+          </tr></thead>
+          <tbody>${skuRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderForecast(data) {
+  const d = agentResults.forecast;
+  const forecastRows = d.skuForecasts.map(s => `
+    <tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">${s.sku}</td>
+      <td style="font-weight:500">${s.name}</td>
+      <td style="color:var(--red);font-weight:500">${s.stockoutDay}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="height:4px;width:${s.confidence}px;background:var(--teal);border-radius:2px;max-width:80px"></div>
+          <span style="font-size:11px;color:var(--text3)">${s.confidence}%</span>
+        </div>
+      </td>
+      <td style="color:var(--accent);font-weight:500">${s.replenishQty.toLocaleString()} units</td>
+    </tr>`).join('');
+
+  document.getElementById('body-forecast').innerHTML = `
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-brain"></i> Forecast summary</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6">${d.summary}</p>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-chart-line"></i> 7-day demand forecast</div>
+      <div class="chart-wrap"><canvas id="forecastChart" role="img" aria-label="Demand forecast chart showing actual vs predicted demand over 14 days">Demand trend data</canvas></div>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-clock"></i> Stockout timeline</div>
+      <div style="overflow-x:auto">
+        <table class="sku-table">
+          <thead><tr><th>SKU</th><th>Product</th><th>Stockout by</th><th>Confidence</th><th>Recommended order</th></tr></thead>
+          <tbody>${forecastRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  setTimeout(() => {
+    const ctx = document.getElementById('forecastChart');
+    if (!ctx) return;
+    if (forecastChart) forecastChart.destroy();
+    const cd = d.chartData;
+    forecastChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: cd.labels,
+        datasets: [
+          {
+            label: 'Actual demand',
+            data: cd.actual,
+            borderColor: '#5b9cf6',
+            backgroundColor: 'rgba(91,156,246,0.08)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#5b9cf6',
+            tension: 0.35,
+            fill: true
+          },
+          {
+            label: 'Forecast',
+            data: cd.forecast,
+            borderColor: '#c8f55a',
+            backgroundColor: 'rgba(200,245,90,0.06)',
+            borderWidth: 2,
+            borderDash: [5,4],
+            pointRadius: 3,
+            pointBackgroundColor: '#c8f55a',
+            tension: 0.35,
+            fill: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: '#1a1b1f', titleColor: '#f0ede8', bodyColor: '#9b9892', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 0.5 }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5c5b58', font: { size: 11 } } },
+          y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#5c5b58', font: { size: 11 } } }
+        }
+      }
+    });
+  }, 100);
+}
+
+function renderAnomaly(data) {
+  const d = agentResults.anomaly;
+  const anomalyItems = d.anomalies.map(a => {
+    const cls = a.severity === 'critical' ? 'anomaly-critical' : a.severity === 'warning' ? 'anomaly-warning' : 'anomaly-info';
+    const iconColor = a.severity === 'critical' ? 'var(--red)' : a.severity === 'warning' ? 'var(--amber)' : 'var(--blue)';
+    const icon = a.severity === 'critical' ? 'ti-alert-circle' : a.severity === 'warning' ? 'ti-alert-triangle' : 'ti-info-circle';
+    return `<div class="anomaly-item ${cls}">
+      <i class="ti ${icon} anomaly-icon" style="color:${iconColor}" aria-hidden="true"></i>
+      <div>
+        <div class="anomaly-title">${a.title}</div>
+        <div class="anomaly-desc">${a.description}</div>
+        <div class="anomaly-sku">${a.skus.join(' · ')} &nbsp;·&nbsp; detected ${a.detectedAt}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const riskColor = d.riskScore >= 70 ? 'var(--red)' : d.riskScore >= 40 ? 'var(--amber)' : 'var(--green)';
+  const riskLabel = d.riskScore >= 70 ? 'HIGH RISK' : d.riskScore >= 40 ? 'MEDIUM RISK' : 'LOW RISK';
+
+  document.getElementById('body-anomaly').innerHTML = `
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-radar"></i> Risk assessment</div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="text-align:center">
+          <div style="font-size:36px;font-weight:500;font-family:var(--font-serif);color:${riskColor}">${d.riskScore}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em">${riskLabel}</div>
+        </div>
+        <div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${d.riskScore}%;background:${riskColor};border-radius:3px;transition:width 1s ease"></div>
+        </div>
+      </div>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-bug"></i> Detected anomalies (${d.anomalies.length})</div>
+      <div class="anomaly-list">${anomalyItems}</div>
+    </div>`;
+}
+
+function renderPricing(data) {
+  const d = agentResults.pricing;
+  const replRows = d.replenishments.map(r => {
+    const urgencyColor = r.urgency === 'immediate' ? 'var(--red)' : 'var(--teal)';
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">${r.sku}</td>
+      <td style="font-weight:500">${r.name}</td>
+      <td>${r.currentStock.toLocaleString()}</td>
+      <td style="color:var(--accent);font-weight:500">${r.recommendedOrder.toLocaleString()}</td>
+      <td style="color:var(--text2)">${r.supplier}</td>
+      <td>${r.leadDays}d</td>
+      <td><span style="font-size:11px;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,0.2);border:0.5px solid;color:${urgencyColor};border-color:${urgencyColor}40">${r.urgency}</span></td>
+      <td style="color:var(--text2)">${r.estimatedCost}</td>
+    </tr>`;
+  }).join('');
+
+  const priceCards = d.priceActions.map(p => {
+    const isIncrease = p.recommendedChange.startsWith('+');
+    return `<div class="pricing-card">
+      <div class="pricing-sku">${p.sku}</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:4px">${p.name}</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font-size:12px;color:var(--text3);text-decoration:line-through">${p.currentPrice}</span>
+        <span class="pricing-change" style="color:${isIncrease ? 'var(--red)' : 'var(--green)'}">${p.newPrice}</span>
+        <span style="font-size:11px;padding:2px 6px;border-radius:4px;background:${isIncrease ? 'var(--red-bg)' : 'var(--green-bg)'};color:${isIncrease ? 'var(--red)' : 'var(--green)'}">${p.recommendedChange}</span>
+      </div>
+      <div class="pricing-reason">${p.reason}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('body-pricing').innerHTML = `
+    <div class="result-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="result-label" style="margin-bottom:0"><i class="ti ti-truck"></i> Replenishment orders</div>
+        <div style="font-size:13px;color:var(--text2)">Total cost: <strong style="color:var(--text)">${d.totalReplenishmentCost}</strong></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="sku-table">
+          <thead><tr><th>SKU</th><th>Product</th><th>Current</th><th>Order qty</th><th>Supplier</th><th>Lead</th><th>Urgency</th><th>Est. cost</th></tr></thead>
+          <tbody>${replRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-currency-dollar"></i> Dynamic pricing actions</div>
+      <div class="pricing-grid">${priceCards}</div>
+    </div>`;
+}
+
+function renderExec(data) {
+  const d = agentResults.exec;
+  const riskBg = d.riskLevel === 'HIGH' ? 'var(--red-bg)' : d.riskLevel === 'MEDIUM' ? 'var(--amber-bg)' : 'var(--green-bg)';
+  const riskColor = d.riskLevel === 'HIGH' ? 'var(--red)' : d.riskLevel === 'MEDIUM' ? 'var(--amber)' : 'var(--green)';
+  const findings = d.keyFindings.map((f,i) => `<div style="display:flex;gap:10px;margin-bottom:8px"><span style="color:var(--accent);font-weight:500;flex-shrink:0">${i+1}.</span><span style="color:var(--text2);font-size:13px;line-height:1.5">${f}</span></div>`).join('');
+  const actions = d.immediateActions.map((a,i) => `<div class="action-item"><div class="action-num">${i+1}</div><div><div class="action-title">${a}</div></div></div>`).join('');
+
+  document.getElementById('body-exec').innerHTML = `
+    <div class="result-section">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px">
+        <div style="font-family:var(--font-serif);font-size:20px;font-weight:300;line-height:1.3;color:var(--text)">${d.headline}</div>
+        <div style="flex-shrink:0;text-align:center;padding:10px 14px;border-radius:var(--radius);background:${riskBg};border:0.5px solid ${riskColor}40">
+          <div style="font-size:18px;font-weight:500;color:${riskColor}">${d.riskLevel}</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">risk level</div>
+        </div>
+      </div>
+      <div style="background:var(--bg3);border-left:2px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:12px 14px;margin-bottom:14px">
+        <p style="font-size:13.5px;color:var(--text2);line-height:1.7">${d.executiveSummary}</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
+        <i class="ti ti-alert-circle" style="color:var(--red)" aria-hidden="true"></i>
+        Estimated revenue at risk: <strong style="color:var(--red);font-size:15px">${d.estimatedRevenueImpact}</strong>
+      </div>
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-list-check"></i> Key findings</div>
+      ${findings}
+    </div>
+    <div class="result-section">
+      <div class="result-label"><i class="ti ti-zap"></i> Immediate actions required</div>
+      <div class="actions-list">${actions}</div>
+    </div>
+    <div class="result-section" style="border-top:0.5px solid var(--border);padding-top:14px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button style="padding:8px 16px;border-radius:var(--radius);background:var(--accent);color:#0e0f11;border:none;font-family:var(--font);font-weight:500;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px" onclick="window.print()">
+          <i class="ti ti-download" style="font-size:14px" aria-hidden="true"></i> Export report
+        </button>
+        <button style="padding:8px 16px;border-radius:var(--radius);background:transparent;color:var(--text2);border:0.5px solid var(--border2);font-family:var(--font);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">
+          <i class="ti ti-send" style="font-size:14px" aria-hidden="true"></i> Send to team
+        </button>
+      </div>
+    </div>`;
+}
+
+async function runAllAgents() {
+  const query = document.getElementById('user-query').value.trim();
+  if (!query) return;
+  if (!API_KEY) {
+    const field = document.getElementById('apikey-field');
+    if (field) { field.style.borderColor = 'var(--red)'; field.focus(); setTimeout(() => { field.style.borderColor = ''; }, 2000); }
+    alert('Paste your free Gemini API key first — get one at aistudio.google.com');
+    return;
+  }
+  document.getElementById('active-query-text').textContent = query;
+  document.getElementById('run-btn').disabled = true;
+  agentResults = {};
+
+  AGENTS.forEach(id => {
+    setStatus(id, 'pending', 'Waiting');
+    document.getElementById('body-' + id).innerHTML = '';
+    document.getElementById('body-' + id).classList.remove('open');
+    document.getElementById('chev-' + id).style.transform = '';
+  });
+
+  const agentDefs = [
+    {
+      id: 'sql',
+      thinking: 'Querying inventory tables...',
+      userMsg: (q, _prev) => `User query: "${q}"\nGenerate SQL and inventory snapshot for stockout analysis.`,
+      render: renderSQL
+    },
+    {
+      id: 'forecast',
+      thinking: 'Running demand forecast model...',
+      userMsg: (q, prev) => `User query: "${q}"\nSQL agent found these at-risk SKUs: ${JSON.stringify(prev.sql?.skus || [])}. Generate 14-day demand forecast.`,
+      render: renderForecast
+    },
+    {
+      id: 'anomaly',
+      thinking: 'Scanning for anomalies and pattern breaks...',
+      userMsg: (q, prev) => `User query: "${q}"\nInventory data: ${JSON.stringify(prev.sql?.skus || [])}. Forecast: ${JSON.stringify(prev.forecast?.skuForecasts || [])}. Detect anomalies.`,
+      render: renderAnomaly
+    },
+    {
+      id: 'pricing',
+      thinking: 'Calculating replenishment quantities...',
+      userMsg: (q, prev) => `User query: "${q}"\nAt-risk SKUs: ${JSON.stringify(prev.sql?.skus || [])}. Anomalies: ${JSON.stringify(prev.anomaly?.anomalies?.map(a=>a.title) || [])}. Generate replenishment and pricing actions.`,
+      render: renderPricing
+    },
+    {
+      id: 'exec',
+      thinking: 'Synthesizing management report...',
+      userMsg: (q, prev) => `User query: "${q}"\nAll agent results: SQL metrics: ${JSON.stringify(prev.sql?.metrics)}, Forecast: ${JSON.stringify(prev.forecast?.skuForecasts)}, Anomalies: ${JSON.stringify(prev.anomaly?.anomalies)}, Replenishment cost: ${prev.pricing?.totalReplenishmentCost}. Create executive summary.`,
+      render: renderExec
+    }
+  ];
+
+  for (const agent of agentDefs) {
+    setStatus(agent.id, 'running', 'Running');
+    openPanel(agent.id);
+    showThinking(agent.id, agent.thinking);
+    document.getElementById('agent-' + agent.id).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    try {
+      const result = await callClaude(SYSTEM_PROMPTS[agent.id], agent.userMsg(query, agentResults));
+      agentResults[agent.id] = result;
+      agent.render(result);
+      setStatus(agent.id, 'done', 'Done');
+    } catch (err) {
+      document.getElementById('body-' + agent.id).innerHTML = `<div style="padding:16px 18px;color:var(--red);font-size:13px;display:flex;gap:8px;align-items:center"><i class="ti ti-alert-circle"></i> ${err.message || 'Agent failed. Please try again.'}</div>`;
+      setStatus(agent.id, 'error', 'Error');
+    }
+    await delay(300);
+  }
+
+  document.getElementById('run-btn').disabled = false;
+}
+</script>
+</body>
+</html>
